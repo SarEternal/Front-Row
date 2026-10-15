@@ -114,12 +114,12 @@ button { cursor: pointer; }
 .ticket .main { display: flex; gap: 12px; padding: 12px; min-width: 0; }
 .ticket .poster { width: 58px; }
 .ticket .info { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
-.ticket .t { font: 700 24px/1 var(--font-display); letter-spacing: .01em; overflow-wrap: anywhere; }
-.ticket .meta { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.ticket .t { font: 700 24px/1 var(--font-display); letter-spacing: .01em; overflow-wrap: break-word; }
+.ticket .meta { font-size: 13px; color: var(--muted); overflow-wrap: break-word; }
 .ticket .ex { align-self: flex-start; font: 500 10px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border: 1px dashed var(--line); border-radius: 99px; padding: 3px 7px; }
 .ticket .stub {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-  min-width: 88px; padding: 12px 12px; border-left: 2px dashed var(--line);
+  min-width: 78px; padding: 12px 10px; border-left: 2px dashed var(--line);
 }
 .ticket .stub::before, .ticket .stub::after {
   content: ""; position: absolute; left: -9px; width: 16px; height: 16px; border-radius: 50%;
@@ -127,7 +127,7 @@ button { cursor: pointer; }
 }
 .ticket .stub::before { top: -9px; }
 .ticket .stub::after { bottom: -9px; }
-.ticket .tm { font: 500 21px/1 var(--font-mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ticket .tm { font: 500 19px/1 var(--font-mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .ticket .rel { font: 500 11px/1.2 var(--font-mono); color: var(--accent-ink); text-align: center; text-transform: uppercase; letter-spacing: .06em; }
 .ticket.past { opacity: .72; }
 .ticket.past .rel { color: var(--muted); }
@@ -148,7 +148,8 @@ button { cursor: pointer; }
 .mk.gen { background: var(--c); color: var(--ink); }
 .mk.logo { background: #fff; padding: 2px; border: 1px solid var(--line); }
 .mk.logo img { width: 100%; height: 100%; object-fit: contain; }
-.cn { font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.cn { font-size: 13px; font-weight: 700; line-height: 1.2; overflow-wrap: break-word; }
+.ct { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 
 /* month */
 .mhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 20px; }
@@ -221,6 +222,14 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
 .chip { min-height: 42px; padding: 0 16px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg); font-weight: 700; font-size: 14px; }
 .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .city { font-size: 13px; color: var(--muted); }
+.strip { display: flex; gap: 10px; overflow-x: auto; padding: 4px 0 8px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.tile { flex: none; width: 92px; padding: 0; border: 0; background: none; text-align: left; scroll-snap-align: start; }
+.tile .poster { width: 92px; }
+.tile .tt { display: -webkit-box; margin-top: 6px; font-size: 12px; line-height: 1.25; font-weight: 700; overflow-wrap: anywhere; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tile[aria-pressed="true"] .poster { outline: 3px solid var(--accent); outline-offset: -3px; }
+.row input[type="text"] { flex: 1; }
+.steps { margin: 0 0 14px; padding-left: 20px; font-size: 14px; color: var(--muted); }
+.steps li { margin-bottom: 6px; }
 .row { display: flex; gap: 8px; align-items: stretch; }
 .row select { flex: 1; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -282,6 +291,26 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
         <h2 id="sheet-title">New screening</h2>
         <button type="button" class="x" data-close aria-label="Close">&times;</button>
       </div>
+      <div class="field" id="finder" hidden>
+        <span class="lbl">Find a film</span>
+        <div id="tm-off">
+          <button type="button" class="btn" id="tm-setup">Set up film finder</button>
+          <p class="hint" style="margin-top:8px">Fills in the title and poster for you. Needs a free key, set up once.</p>
+        </div>
+        <div id="tm-on" hidden>
+          <div class="row">
+            <input id="tm-q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="Search by title" aria-label="Search for a film">
+            <button type="button" class="btn" id="tm-go">Search</button>
+          </div>
+          <div class="chips" style="margin-top:10px">
+            <button type="button" class="chip" data-tm-list="now_playing" aria-pressed="true">Now playing</button>
+            <button type="button" class="chip" data-tm-list="upcoming" aria-pressed="false">Coming soon</button>
+          </div>
+          <div class="strip" id="tm-strip"></div>
+          <p class="hint" id="tm-msg" role="status"></p>
+          <p class="hint">Film data from TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB. <button type="button" class="lnk" id="tm-key">Film finder key</button></p>
+        </div>
+      </div>
       <div class="field">
         <label for="f-title">Film</label>
         <input id="f-title" type="text" autocomplete="off" maxlength="120" placeholder="Film title">
@@ -333,6 +362,32 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
         <button type="submit" class="btn primary" id="s-save">Save</button>
       </div>
     </form>
+  </div>
+</dialog>
+
+<dialog id="tdlg" aria-labelledby="tdlg-title">
+  <div class="inner">
+    <div class="sh-head">
+      <h2 id="tdlg-title">Film finder</h2>
+      <button type="button" class="x" data-close aria-label="Close">&times;</button>
+    </div>
+    <p class="hint" style="margin-bottom:10px">Finds film titles and posters for you. It needs a free key from The Movie Database (TMDB).</p>
+    <ol class="steps">
+      <li>Make a free account at themoviedb.org.</li>
+      <li>On a computer, open your account settings, choose the API link and request a key. It is a short form for a personal project.</li>
+      <li>Copy the "API Key" (or the long "API Read Access Token") and paste it below.</li>
+    </ol>
+    <div class="field">
+      <label for="tm-key-in">Your key</label>
+      <input id="tm-key-in" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="acts">
+      <button type="button" class="btn danger" id="tm-key-clear">Remove key</button>
+      <span class="sp"></span>
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="button" class="btn primary" id="tm-key-save">Save key</button>
+    </div>
+    <p class="hint" style="margin-top:14px">The key stays on this phone. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
   </div>
 </dialog>
 
@@ -405,6 +460,7 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
     if (id && /^[0-9a-f]{32}$/.test(id)) return '/_blob/' + id;
     var d = r[key + 'Data'];
     if (d && String(d).indexOf('data:image/') === 0) return d;
+    if (key === 'poster' && /^\/[\w-]+\.(jpg|png)$/.test(r.posterRemote || '')) return 'https://image.tmdb.org/t/p/w342' + r.posterRemote;
     return '';
   }
   function startMs(r) {
@@ -461,8 +517,8 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
   }
   function badge(c, city) {
     var cityHtml = city ? '<span class="city">' + esc(city) + '</span>' : '';
-    if (!c) return '<span class="cin"><span class="mk gen" style="--c:#777777;--ink:#fff">?</span><span class="cn">Cinema not set</span>' + cityHtml + '</span>';
-    return '<span class="cin">' + markHTML(c) + '<span class="cn">' + esc(c.name) + '</span>' + cityHtml + '</span>';
+    if (!c) return '<span class="cin"><span class="mk gen" style="--c:#777777;--ink:#fff">?</span><span class="ct"><span class="cn">Cinema not set</span>' + cityHtml + '</span></span>';
+    return '<span class="cin">' + markHTML(c) + '<span class="ct"><span class="cn">' + esc(c.name) + '</span>' + cityHtml + '</span></span>';
   }
   function ticket(r, past) {
     var meta = [r.who ? 'With ' + r.who : '', r.seat, r.note].filter(Boolean).map(esc).join(' · ');
@@ -633,11 +689,15 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
       box.innerHTML = '<img src="' + prevUrl + '" alt="">';
       return;
     }
-    if (!draft.clear && draft.row) { pseudo.posterId = draft.row.posterId; pseudo.posterData = draft.row.posterData; }
+    if (draft.remote) {
+      box.innerHTML = '<img src="https://image.tmdb.org/t/p/w342' + draft.remote + '" alt="">';
+      return;
+    }
+    if (!draft.clear && draft.row) { pseudo.posterId = draft.row.posterId; pseudo.posterData = draft.row.posterData; pseudo.posterRemote = draft.row.posterRemote; }
     box.innerHTML = posterInner(pseudo);
   }
   function openSheet(row, date) {
-    draft = { id: row ? row.id : null, row: row || null, blob: null, clear: false };
+    draft = { id: row ? row.id : null, row: row || null, blob: null, clear: false, remote: null };
     $('sheet-title').textContent = row ? 'Edit screening' : 'New screening';
     $('f-title').value = row ? row.title || '' : '';
     fillCinemaSelect(row ? row.cinemaId : lastCinema());
@@ -655,8 +715,8 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
     if (del._t) { clearTimeout(del._t); }
     del.textContent = 'Delete'; delete del.dataset.armed;
     drawPosterPrev();
+    refreshFinder(!row);
     $('sheet').showModal();
-    if (!row) $('f-title').focus();
   }
 
   async function saveScreening(e) {
@@ -677,11 +737,25 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
         var im = await storeImage(draft.blob);
         if (im.id) row.posterId = im.id; else row.posterData = im.data;
         oldAsset = old && old.posterId;
+      } else if (draft.remote) {
+        oldAsset = old && old.posterId;
+        var got = false;
+        try {
+          var rr = await fetch('https://image.tmdb.org/t/p/w500' + draft.remote);
+          if (rr.ok) {
+            var small = await fitImage(await rr.blob(), 520, 'image/jpeg', 0.82);
+            var im2 = await storeImage(small);
+            if (im2.id) row.posterId = im2.id; else row.posterData = im2.data;
+            got = true;
+          }
+        } catch (e) { got = false; }
+        if (!got) row.posterRemote = draft.remote;
       } else if (draft.clear) {
         oldAsset = old && old.posterId;
       } else if (old) {
         if (old.posterId) row.posterId = old.posterId;
         if (old.posterData) row.posterData = old.posterData;
+        if (old.posterRemote) row.posterRemote = old.posterRemote;
       }
       await store.set('screenings', draft.id || newId(), row);
       dropAsset(oldAsset);
@@ -727,6 +801,100 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
       toast('Logo saved');
     } catch (err) { toast(err && err.message === 'read' ? 'That file is not an image.' : errMsg(err)); }
   }
+
+  /* ---------- film finder (TMDB), only where the page saves on the device ---------- */
+  var TM = { results: [], kind: 'now_playing', token: 0 };
+  var TM_IMG = 'https://image.tmdb.org/t/p/';
+  function tmKey() { return (lsGet('frontrow:tmdbKey') || '').trim(); }
+  function validPath(p) { return typeof p === 'string' && /^\/[\w-]+\.(jpg|png)$/.test(p); }
+  function tmMsg(t) { $('tm-msg').textContent = t || ''; }
+  function tmPress(kind) {
+    document.querySelectorAll('[data-tm-list]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.tmList === kind)); });
+  }
+  async function tmFetch(path, params) {
+    var key = tmKey();
+    if (!key) throw new Error('nokey');
+    var u = new URL('https://api.themoviedb.org/3' + path);
+    Object.keys(params).forEach(function (k) { u.searchParams.set(k, params[k]); });
+    var opts;
+    if (key.length > 40 || key.indexOf('.') > -1) opts = { headers: { Authorization: 'Bearer ' + key, accept: 'application/json' } };
+    else u.searchParams.set('api_key', key);
+    var res = await fetch(u.toString(), opts);
+    if (res.status === 401) throw new Error('badkey');
+    if (!res.ok) throw new Error('http');
+    return res.json();
+  }
+  function drawStrip() {
+    $('tm-strip').innerHTML = TM.results.slice(0, 20).map(function (r, i) {
+      var img = validPath(r.poster_path)
+        ? '<img src="' + TM_IMG + 'w185' + r.poster_path + '" alt="" loading="lazy">'
+        : posterInner({ title: r.title || r.original_title });
+      return '<button type="button" class="tile" data-tm="' + i + '" aria-pressed="false"><span class="poster">' + img + '</span><span class="tt">' + esc(r.title || r.original_title) + '</span></button>';
+    }).join('');
+  }
+  async function tmRun(fn) {
+    var mine = ++TM.token;
+    tmMsg('Loading…');
+    try {
+      var d = await fn();
+      if (mine !== TM.token) return;
+      TM.results = (d.results || []).filter(function (r) { return r && (r.title || r.original_title); });
+      drawStrip();
+      tmMsg(TM.results.length ? '' : 'No films found.');
+    } catch (e) {
+      if (mine !== TM.token) return;
+      TM.results = []; drawStrip();
+      tmMsg(e && e.message === 'badkey' ? 'TMDB rejected the key. Check it under "Film finder key".' : 'Could not reach the film database. Check your connection.');
+    }
+  }
+  function tmList(kind) {
+    TM.kind = kind; tmPress(kind);
+    return tmRun(function () { return tmFetch('/movie/' + kind, { language: 'pl-PL', region: 'PL', page: 1 }); });
+  }
+  function tmSearch() {
+    var q = $('tm-q').value.trim();
+    if (!q) { tmList(TM.kind); return; }
+    tmPress('');
+    tmRun(function () { return tmFetch('/search/movie', { query: q, language: 'pl-PL', include_adult: 'false' }); });
+  }
+  function refreshFinder(isNew) {
+    var on = S.mode === 'local';
+    $('finder').hidden = !on;
+    if (!on) return;
+    var has = !!tmKey();
+    $('tm-off').hidden = has; $('tm-on').hidden = !has;
+    $('tm-q').value = ''; TM.results = []; $('tm-strip').innerHTML = ''; tmMsg('');
+    if (has && isNew) tmList('now_playing'); else tmPress('');
+  }
+  $('tm-go').addEventListener('click', tmSearch);
+  $('tm-q').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); tmSearch(); } });
+  $('finder').addEventListener('click', function (e) {
+    var chip = e.target.closest('[data-tm-list]');
+    if (chip) { $('tm-q').value = ''; tmList(chip.dataset.tmList); return; }
+    var tile = e.target.closest('[data-tm]');
+    if (tile) {
+      var r = TM.results[Number(tile.dataset.tm)];
+      if (!r) return;
+      $('f-title').value = r.title || r.original_title || '';
+      draft.blob = null;
+      draft.remote = validPath(r.poster_path) ? r.poster_path : null;
+      draft.clear = !draft.remote;
+      document.querySelectorAll('.tile').forEach(function (t) { t.setAttribute('aria-pressed', String(t === tile)); });
+      drawPosterPrev();
+      return;
+    }
+    if (e.target.closest('#tm-setup, #tm-key')) { $('tm-key-in').value = tmKey(); $('tdlg').showModal(); }
+  });
+  $('tm-key-save').addEventListener('click', function () {
+    var v = $('tm-key-in').value.trim();
+    if (!v) { toast('Paste your key first.'); return; }
+    lsSet('frontrow:tmdbKey', v);
+    $('tdlg').close(); refreshFinder(!(draft && draft.row)); toast('Key saved');
+  });
+  $('tm-key-clear').addEventListener('click', function () {
+    try { localStorage.removeItem('frontrow:tmdbKey'); } catch (e) { /* storage unavailable */ }
+    $('tdlg').close(); refreshFinder(false); toast('Key removed');
+  });
 
   /* ---------- storage backends ---------- */
   function sample() {
@@ -827,7 +995,7 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
   $('f-poster').addEventListener('change', async function (e) {
     var f = e.target.files && e.target.files[0];
     if (!f) return;
-    try { draft.blob = await fitImage(f, 520, 'image/jpeg', 0.82); draft.clear = false; drawPosterPrev(); }
+    try { draft.blob = await fitImage(f, 520, 'image/jpeg', 0.82); draft.clear = false; draft.remote = null; drawPosterPrev(); }
     catch (err) { toast('That file is not an image.'); }
   });
   $('f-city').addEventListener('click', function (e) {
@@ -837,7 +1005,7 @@ input[type="color"] { width: 46px; height: 46px; padding: 3px; border-radius: 10
     $('f-city-new').value = ''; $('f-city-new').hidden = true;
     drawCities();
   });
-  $('p-clear').addEventListener('click', function () { draft.blob = null; draft.clear = true; $('f-poster').value = ''; drawPosterPrev(); });
+  $('p-clear').addEventListener('click', function () { draft.blob = null; draft.remote = null; draft.clear = true; $('f-poster').value = ''; drawPosterPrev(); });
   $('s-del').addEventListener('click', function () {
     var btn = $('s-del');
     arm(btn, 'Tap again to delete', async function () {
