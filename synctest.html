@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sync test</title>
+<style>
+:root { color-scheme: light dark; --bg:#F2F1F6; --surface:#fff; --fg:#1B1A24; --muted:#5F5D72; --line:#D9D7E3; --ok:#1E8A5B; --bad:#C2300F; --accent:#E5372F; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0F111A; --surface:#181B27; --fg:#ECEAF4; --muted:#9D9BB1; --line:#2D3147; --ok:#3FB27F; --bad:#FF7A5C; } }
+* { box-sizing:border-box; }
+body { margin:0; padding:20px 16px 40px; background:var(--bg); color:var(--fg); font:16px/1.45 system-ui,-apple-system,sans-serif; }
+.wrap { max-width:520px; margin:0 auto; }
+h1 { margin:0 0 6px; font-size:26px; }
+p { margin:0 0 14px; color:var(--muted); }
+button { width:100%; min-height:52px; border:0; border-radius:14px; background:var(--accent); color:#fff; font:700 17px system-ui,sans-serif; }
+button:disabled { opacity:.5; }
+ul { list-style:none; margin:18px 0 0; padding:0; display:grid; gap:8px; }
+li { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 12px; overflow-wrap:anywhere; }
+li b { display:block; }
+li.ok b { color:var(--ok); } li.bad b { color:var(--bad); } li.wait b { color:var(--muted); }
+li small { display:block; margin-top:2px; color:var(--muted); font:12px/1.35 ui-monospace,Menlo,monospace; }
+#sum { margin-top:16px; padding:14px; border-radius:14px; border:2px solid var(--line); font-weight:700; }
+#sum.ok { border-color:var(--ok); } #sum.bad { border-color:var(--bad); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sync test</h1>
+  <p>Tap the button, wait a few seconds, then send me a screenshot of the whole result. Nothing from Front Row is used or stored here.</p>
+  <button id="go" type="button">Run test</button>
+  <ul id="out"></ul>
+  <div id="sum" hidden></div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var out = document.getElementById('out'), sum = document.getElementById('sum'), go = document.getElementById('go');
+  var HOST = 'https://jsonblob.com/api/jsonBlob';
+  function row(title) {
+    var li = document.createElement('li'); li.className = 'wait';
+    li.innerHTML = '<b></b><small></small>'; li.firstChild.textContent = title + ' …'; out.appendChild(li);
+    return {
+      ok: function (note) { li.className = 'ok'; li.firstChild.textContent = '✓ ' + title; li.lastChild.textContent = note || ''; return true; },
+      bad: function (note) { li.className = 'bad'; li.firstChild.textContent = '✗ ' + title; li.lastChild.textContent = note || ''; return false; }
+    };
+  }
+  function why(e) { return /abort|timeout/i.test(String(e && e.name + e.message)) ? 'timed out' : 'blocked or unreachable (' + String(e && e.message || e).slice(0, 80) + ')'; }
+  async function call(url, opts) {
+    var ctl = new AbortController(), t = setTimeout(function () { ctl.abort(); }, 15000);
+    try { opts = opts || {}; opts.signal = ctl.signal; return await fetch(url, opts); } finally { clearTimeout(t); }
+  }
+  var JSONH = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+
+  async function run() {
+    out.innerHTML = ''; sum.hidden = true; go.disabled = true;
+    var pass = 0, total = 0, step;
+    function tally(ok) { total++; if (ok) pass++; return ok; }
+
+    step = row('Internet reachable from this page');
+    try { var z = await call('https://api.github.com/zen'); tally(z.ok ? step.ok('HTTP ' + z.status) : step.bad('HTTP ' + z.status)); }
+    catch (e) { tally(step.bad(why(e))); }
+
+    var url = '', id = '';
+    step = row('Create a storage slot');
+    try {
+      var r = await call(HOST, { method: 'POST', headers: JSONH, body: JSON.stringify({ t: 'frontrow-sync-test', n: 1 }) });
+      if (r.status !== 201 && r.status !== 200) tally(step.bad('HTTP ' + r.status));
+      else {
+        var loc = r.headers.get('Location') || r.headers.get('location') || '';
+        if (!loc) tally(step.bad('Created, but the page cannot see the slot address (HTTP ' + r.status + ')'));
+        else { url = loc; id = loc.split('/').pop(); tally(step.ok('HTTP ' + r.status + ', address ends in ' + id.slice(-6))); }
+      }
+    } catch (e) { tally(step.bad(why(e))); }
+
+    if (url) {
+      step = row('Read it back');
+      try {
+        var g = await call(url, { headers: { 'Accept': 'application/json' } }); var gj = await g.json();
+        tally(g.ok && gj.n === 1 ? step.ok('HTTP ' + g.status + ', data matches') : step.bad('HTTP ' + g.status + ', data ' + JSON.stringify(gj).slice(0, 60)));
+      } catch (e) { tally(step.bad(why(e))); }
+
+      step = row('Update it');
+      try {
+        var p = await call(url, { method: 'PUT', headers: JSONH, body: JSON.stringify({ t: 'frontrow-sync-test', n: 2 }) });
+        tally(p.ok ? step.ok('HTTP ' + p.status) : step.bad('HTTP ' + p.status));
+      } catch (e) { tally(step.bad(why(e))); }
+
+      step = row('Read the update');
+      try {
+        var g2 = await call(url, { headers: { 'Accept': 'application/json' } }); var g2j = await g2.json();
+        tally(g2.ok && g2j.n === 2 ? step.ok('HTTP ' + g2.status + ', update is there') : step.bad('HTTP ' + g2.status + ', data ' + JSON.stringify(g2j).slice(0, 60)));
+      } catch (e) { tally(step.bad(why(e))); }
+
+      step = row('Large data (about 1.5 MB)');
+      try {
+        var big = { t: 'frontrow-sync-test', n: 3, pad: 'x'.repeat(1500000) };
+        var p3 = await call(url, { method: 'PUT', headers: JSONH, body: JSON.stringify(big) });
+        if (!p3.ok) tally(step.bad('HTTP ' + p3.status));
+        else { var g3 = await call(url, { headers: { 'Accept': 'application/json' } }); var g3j = await g3.json(); tally(g3.ok && g3j.n === 3 && g3j.pad.length === 1500000 ? step.ok('stored and read back intact') : step.bad('came back different (HTTP ' + g3.status + ')')); }
+      } catch (e) { tally(step.bad(why(e))); }
+
+      step = row('Tidy up');
+      try { var d = await call(url, { method: 'DELETE' }); step[d.ok ? 'ok' : 'bad']('HTTP ' + d.status + (d.ok ? '' : ' (harmless)')); } catch (e) { step.bad('skipped (harmless)'); }
+    }
+
+    var good = total > 0 && pass === total;
+    sum.hidden = false; sum.className = good ? 'ok' : 'bad';
+    sum.textContent = good ? 'All ' + total + ' checks passed.' : pass + ' of ' + total + ' checks passed. Send me a screenshot.';
+    go.disabled = false;
+  }
+  go.addEventListener('click', run);
+})();
+</script>
+</body>
+</html>
